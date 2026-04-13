@@ -1,0 +1,17 @@
+# Expo / React Native
+satto-mobile/node_modules/
+satto-mobile/.expo/
+satto-mobile/dist/
+satto-mobile/web-build/
+satto-mobile/.metro-health-check*
+satto-mobile/*.jks
+satto-mobile/*.p8
+satto-mobile/*.p12
+satto-mobile/*.key
+satto-mobile/*.mobileprovision
+satto-mobile/*.orig.*
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
