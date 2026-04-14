@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  Animated, Share, Alert,
+  Animated, Share,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -14,7 +14,6 @@ import { generateAllCombinations, LottoResult, getBallColor } from '../utils/lot
 import FortuneScore from '../components/FortuneScore';
 import LottoNumberBall from '../components/LottoNumberBall';
 
-const COMBINATION_TYPES = ['재물기회형', '안정상승형', '직감몰림형', '균형흐름형'] as const;
 
 export default function ResultScreen() {
   const [results, setResults] = useState<LottoResult[]>([]);

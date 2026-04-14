@@ -99,12 +99,19 @@ export async function getFrequentNumbers(): Promise<{ number: number; count: num
     .slice(0, 10);
 }
 
-// 현재 로또 회차 계산 (2002년 12월 7일 1회차 기준)
+// 다음 추첨 예정 회차 계산 (2002년 12월 7일 1회차 기준, 매주 토요일 추첨)
 export function getCurrentLottoRound(): number {
-  const baseDate = new Date('2002-12-07');
+  const baseDate = new Date('2002-12-07'); // 1회차 추첨일 (토요일)
   const today = new Date();
-  const diffMs = today.getTime() - baseDate.getTime();
-  const diffWeeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+
+  // 오늘 기준 다음 토요일 구하기 (오늘이 토요일이면 오늘)
+  const daysUntilSaturday = (6 - today.getDay() + 7) % 7;
+  const nextSaturday = new Date(today);
+  nextSaturday.setDate(today.getDate() + daysUntilSaturday);
+  nextSaturday.setHours(0, 0, 0, 0);
+
+  const diffMs = nextSaturday.getTime() - baseDate.getTime();
+  const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
   return diffWeeks + 1;
 }
 

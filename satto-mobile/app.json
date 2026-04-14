@@ -13,6 +13,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#0D1B2A"
     },
+    "platforms": ["ios", "android", "web"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.satto.app"
@@ -30,8 +31,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      "expo-haptics"
+      "expo-router"
     ]
   }
 }

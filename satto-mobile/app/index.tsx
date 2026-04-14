@@ -3,27 +3,31 @@ import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Colors, Fonts, Radius, Spacing } from '../constants/theme';
-import { getUserProfile, getSavedResults, hasOnboarded, getCurrentLottoRound, formatDate, UserProfile, SavedResult } from '../utils/storage';
+import {
+  getUserProfile, getSavedResults, hasOnboarded,
+  getCurrentLottoRound, formatDate, UserProfile, SavedResult,
+} from '../utils/storage';
 import { calculateSajuWeights } from '../utils/sajeEngine';
-import { generateLottoNumbers } from '../utils/lottoEngine';
-import LottoCard from '../components/LottoCard';
 import FortuneScore from '../components/FortuneScore';
+import { getBallColor } from '../utils/lottoEngine';
+
+type AppState = 'loading' | 'onboarding' | 'home';
 
 export default function HomeScreen() {
+  const [appState, setAppState] = useState<AppState>('loading');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [recentResult, setRecentResult] = useState<SavedResult | null>(null);
   const [fortuneScore, setFortuneScore] = useState(0);
   const [luckyKeyword, setLuckyKeyword] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     const onboarded = await hasOnboarded();
     if (!onboarded) {
-      router.replace('/onboarding');
+      setAppState('onboarding');
       return;
     }
     const p = await getUserProfile();
@@ -43,7 +47,7 @@ export default function HomeScreen() {
       setFortuneScore(weights.dayFortune);
       setLuckyKeyword(weights.luckyKeyword);
     }
-    setLoading(false);
+    setAppState('home');
   }, []);
 
   useEffect(() => {
@@ -61,11 +65,18 @@ export default function HomeScreen() {
     router.push('/result');
   };
 
-  if (loading) {
+  // 온보딩으로 이동
+  if (appState === 'onboarding') {
+    return <Redirect href="/onboarding" />;
+  }
+
+  // 로딩
+  if (appState === 'loading') {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: Colors.gold.primary, fontSize: 24, fontWeight: '800' }}>사또</Text>
-      </View>
+      <LinearGradient colors={[Colors.bg.primary, '#0A1520']} style={styles.center}>
+        <Text style={styles.loadingLogo}>사또</Text>
+        <Text style={styles.loadingText}>사주 흐름을 분석하는 중...</Text>
+      </LinearGradient>
     );
   }
 
@@ -78,7 +89,9 @@ export default function HomeScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gold.primary} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gold.primary} />
+        }
       >
         {/* 상단 헤더 */}
         <View style={styles.topBar}>
@@ -118,7 +131,7 @@ export default function HomeScreen() {
             end={{ x: 1, y: 0 }}
           >
             <Text style={styles.recommendIcon}>🎰</Text>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.recommendTitle}>내 사주 번호 추천받기</Text>
               <Text style={styles.recommendSub}>{round}회차 번호를 뽑아보세요</Text>
             </View>
@@ -139,7 +152,7 @@ export default function HomeScreen() {
               <Text style={styles.recentDate}>{formatDate(recentResult.date)}</Text>
               <View style={styles.recentNumbers}>
                 {recentResult.numbers.map((n, i) => (
-                  <View key={i} style={[styles.miniNum, { backgroundColor: getMiniColor(n) }]}>
+                  <View key={i} style={[styles.miniNum, { backgroundColor: getBallColor(n) }]}>
                     <Text style={styles.miniNumText}>{n}</Text>
                   </View>
                 ))}
@@ -155,7 +168,7 @@ export default function HomeScreen() {
 
         {/* 하단 탭 */}
         <View style={styles.tabBar}>
-          <TabBtn icon="🏠" label="홈" active onPress={() => {}} />
+          <TabBtn icon="🏠" label="홈" active />
           <TabBtn icon="📋" label="히스토리" onPress={() => router.push('/history')} />
           <TabBtn icon="⚙" label="설정" onPress={() => router.push('/settings')} />
         </View>
@@ -165,7 +178,7 @@ export default function HomeScreen() {
 }
 
 function TabBtn({ icon, label, active, onPress }: {
-  icon: string; label: string; active?: boolean; onPress: () => void
+  icon: string; label: string; active?: boolean; onPress?: () => void;
 }) {
   return (
     <TouchableOpacity style={styles.tabBtn} onPress={onPress}>
@@ -175,16 +188,11 @@ function TabBtn({ icon, label, active, onPress }: {
   );
 }
 
-function getMiniColor(n: number): string {
-  if (n <= 10) return '#F7B731';
-  if (n <= 20) return '#4A90D9';
-  if (n <= 30) return '#E8453C';
-  if (n <= 40) return '#8E9AAA';
-  return '#43B97F';
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+  loadingLogo: { fontSize: 40, fontWeight: '800', color: Colors.gold.primary, letterSpacing: 4 },
+  loadingText: { color: Colors.text.secondary, fontSize: Fonts.sizes.sm },
   scrollContent: { flexGrow: 1, paddingBottom: 90 },
   topBar: {
     flexDirection: 'row',
@@ -198,7 +206,6 @@ const styles = StyleSheet.create({
   dateText: { color: Colors.text.muted, fontSize: Fonts.sizes.xs, marginTop: 2 },
   settingsBtn: { padding: 8 },
   settingsIcon: { fontSize: 22, color: Colors.text.secondary },
-  // 복권운 카드
   fortuneCard: {
     marginHorizontal: Spacing.lg,
     borderRadius: Radius.lg,
@@ -223,7 +230,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   keywordText: { color: Colors.gold.primary, fontSize: Fonts.sizes.xs, fontWeight: Fonts.weights.semibold },
-  // 추천 버튼
   recommendBtn: {
     marginHorizontal: Spacing.lg,
     borderRadius: Radius.lg,
@@ -236,13 +242,16 @@ const styles = StyleSheet.create({
   recommendIcon: { fontSize: 32 },
   recommendTitle: { color: '#0D1B2A', fontSize: Fonts.sizes.md, fontWeight: Fonts.weights.bold },
   recommendSub: { color: 'rgba(13,27,42,0.6)', fontSize: Fonts.sizes.xs },
-  recommendArrow: { marginLeft: 'auto', fontSize: 20, color: '#0D1B2A', fontWeight: '800' },
-  // 섹션
+  recommendArrow: { fontSize: 20, color: '#0D1B2A', fontWeight: '800' },
   section: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   sectionTitle: { color: Colors.text.primary, fontSize: Fonts.sizes.md, fontWeight: Fonts.weights.semibold },
   seeAll: { color: Colors.gold.primary, fontSize: Fonts.sizes.xs },
-  // 최근 추천 카드
   recentCard: {
     backgroundColor: Colors.bg.card,
     borderRadius: Radius.lg,
@@ -252,14 +261,10 @@ const styles = StyleSheet.create({
   },
   recentDate: { color: Colors.text.muted, fontSize: Fonts.sizes.xs, marginBottom: 10 },
   recentNumbers: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  miniNum: {
-    width: 32, height: 32, borderRadius: 16,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  miniNum: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   miniNumText: { color: '#fff', fontSize: 11, fontWeight: '800' },
   miniPlus: { color: Colors.text.muted, fontSize: 12 },
   recentLabel: { color: Colors.text.muted, fontSize: Fonts.sizes.xs },
-  // 탭바
   tabBar: {
     position: 'absolute',
     bottom: 0,

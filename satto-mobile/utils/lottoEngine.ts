@@ -60,31 +60,36 @@ function weightedSample(weights: number[], count: number, seed: number): number[
   const selected: number[] = [];
   let rng = seed;
 
-  // 간단한 선형 합동 생성기(LCG)로 재현 가능한 랜덤성 제공
   const nextRandom = () => {
     rng = (rng * 1664525 + 1013904223) & 0xffffffff;
     return Math.abs(rng) / 0x7fffffff;
   };
 
-  while (selected.length < count) {
+  const maxAttempts = count * 10;
+  let attempts = 0;
+
+  while (selected.length < count && attempts < maxAttempts) {
+    attempts++;
     const totalWeight = remainWeights.reduce((a, b) => a + b, 0);
+    if (totalWeight <= 0) break;
+
     let r = nextRandom() * totalWeight;
     for (let i = 0; i < remainWeights.length; i++) {
       r -= remainWeights[i];
-      if (r <= 0 && !selected.includes(i + 1)) {
+      if (r <= 0) {
         selected.push(i + 1);
-        remainWeights[i] = 0; // 선택된 번호 제거
+        remainWeights[i] = 0;
         break;
       }
     }
-    // 안전장치: 루프가 끝나도 선택이 안된 경우 남은 것 중 랜덤 선택
-    if (selected.length < count) {
-      const remaining = Array.from({ length: 45 }, (_, i) => i + 1)
-        .filter(n => !selected.includes(n));
-      if (remaining.length > 0) {
-        const idx = Math.floor(nextRandom() * remaining.length);
-        selected.push(remaining[idx]);
-      }
+  }
+
+  // 부족한 경우 남은 번호에서 순차 보충
+  if (selected.length < count) {
+    const remaining = Array.from({ length: 45 }, (_, i) => i + 1)
+      .filter(n => !selected.includes(n));
+    for (let i = 0; i < remaining.length && selected.length < count; i++) {
+      selected.push(remaining[i]);
     }
   }
 

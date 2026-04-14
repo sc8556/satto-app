@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  TextInput, Platform, KeyboardAvoidingView, Dimensions,
+  TextInput, Platform, KeyboardAvoidingView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Colors, Fonts, Radius, Spacing } from '../constants/theme';
 import { saveUserProfile, setOnboarded } from '../utils/storage';
-
-const { width } = Dimensions.get('window');
 
 type Step = 0 | 1 | 2 | 3;
 

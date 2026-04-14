@@ -1,11 +1,11 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Colors } from '../constants/theme';
 
 export default function RootLayout() {
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.bg.primary }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bg.primary }}>
       <StatusBar style="light" backgroundColor={Colors.bg.primary} />
       <Stack
         screenOptions={{
@@ -20,6 +20,6 @@ export default function RootLayout() {
         <Stack.Screen name="history" />
         <Stack.Screen name="settings" />
       </Stack>
-    </View>
+    </GestureHandlerRootView>
   );
 }
